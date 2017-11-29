@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Board : MonoBehaviour {
 
@@ -29,6 +30,7 @@ public class Board : MonoBehaviour {
 		SetupTiles();
 		SetupCamera();
 		FillRandom();
+		HighlightMatches();
 	}
 	
 
@@ -240,7 +242,90 @@ public class Board : MonoBehaviour {
 
 	List<GamePiece> FindVerticalMatches(int startX, int startY, int minLength = 3) 
 	{
+		List<GamePiece> upwardMatches = FindMatches(startX, startY, new Vector2(0,1), 2);
+		List<GamePiece> downwardMatches = FindMatches(startX, startY, new Vector2(0,-1), 2);
+
+		if (upwardMatches == null) 
+		{
+			upwardMatches = new List<GamePiece>();
+		}
+
+		if (downwardMatches == null) 
+		{
+			downwardMatches = new List<GamePiece>();
+		}
+
+		var combinedMatches = upwardMatches.Union(downwardMatches).ToList();
+
+		return (combinedMatches.Count >= minLength) ? combinedMatches : null;
+
+//		foreach(GamePiece piece in downwardMatches) 
+//		{
+//			if (!upwardMatches.Contains(piece)) 
+//			{
+//				upwardMatches.Add(piece);
+//			}
+//		}
+//
+//		return (upwardMatches.Count >= minLength) ? upwardMatches : null;
+	}
+
+	List<GamePiece> FindHorizontalMatches(int startX, int startY, int minLength = 3) 
+	{
+		List<GamePiece> rightMatches = FindMatches(startX, startY, new Vector2(1,0), 2);
+		List<GamePiece> leftMatches = FindMatches(startX, startY, new Vector2(-1,0), 2);
+
+		if (rightMatches == null) 
+		{
+			rightMatches = new List<GamePiece>();
+		}
+
+		if (leftMatches == null) 
+		{
+			leftMatches = new List<GamePiece>();
+		}
+
+		var combinedMatches = rightMatches.Union(leftMatches).ToList();
+
+		return (combinedMatches.Count >= minLength) ? combinedMatches : null;
 
 	}
 
+	void HighlightMatches() 
+	{
+		for (int i = 0; i < width; i++) 
+		{
+			for (int j = 0; j < height; j++)
+			{
+				SpriteRenderer spriteRenderer = m_allTiles[i,j].GetComponent<SpriteRenderer>();
+				spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0);
+
+				List<GamePiece> horizMatches = FindHorizontalMatches(i,j,3);
+				List<GamePiece> vertMatches = FindVerticalMatches(i,j,3);
+
+				if (horizMatches == null) 
+				{
+					horizMatches = new List<GamePiece>();
+				}
+
+				if (vertMatches == null) 
+				{
+					vertMatches = new List<GamePiece>();
+				}
+
+				var combinedMatches = horizMatches.Union(vertMatches).ToList();
+
+				if (combinedMatches.Count > 0) 
+				{
+					foreach (GamePiece piece in combinedMatches) 
+					{
+						spriteRenderer = m_allTiles[piece.xIndex, piece.yIndex].GetComponent<SpriteRenderer>();
+						spriteRenderer.color = piece.GetComponent<SpriteRenderer>().color;
+
+
+					}
+				}
+			}
+		}
+	}
 }
